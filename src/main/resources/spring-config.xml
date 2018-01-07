@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-4.0.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+    <!--配置Spring扫描的包-->
+    <context:component-scan base-package="cn.litten.dao"/>
+    <context:component-scan base-package="cn.litten.service"/>
+    <!--配置数据源-->
+    <context:property-placeholder location="classpath*:db.properties"/>
+    <bean id="datesource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close"
+          p:driverClassName="${driverClassName}"
+          p:url="${url}"
+          p:username="root"
+          p:password="${password}"/>
+    <!--配置jdbcTemplate-->
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate"
+          p:dataSource-ref="datesource"/>
+
+    <!--配置事务管理-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="datesource"/>
+    </bean>
+
+    <!--配置aop-->
+    <aop:config proxy-target-class="true">
+        <aop:pointcut id="serviceMethod" expression="(execution(* cn.litten.service..*(..)))and
+        (@annotation(org.springframework.transaction.annotation.Transactional))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="serviceMethod"/>
+    </aop:config>
+
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="*"/>
+        </tx:attributes>
+    </tx:advice>
+</beans>
